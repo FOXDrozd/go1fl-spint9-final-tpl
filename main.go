@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
+	"slices"
 	"sync"
 	"time"
 )
@@ -12,12 +12,6 @@ const (
 	SIZE   = 100_000_000
 	CHUNKS = 8
 )
-
-var (
-	wg sync.WaitGroup 
-	mu sync.Mutex
-)
-
 
 // generateRandomElements generates random elements.
 func generateRandomElements(size int) []int {
@@ -41,12 +35,7 @@ func maximum(data []int) int {
 		return 0
 	}
 	// ваш код здесь
-	max := math.MinInt
-
-	for _, val := range data {
-		//if max < val { max = val} ??
-		max = int(math.Max(float64(val), float64(max)))
-	}
+	max := slices.Max(data)
 
 	return max
 }
@@ -55,7 +44,38 @@ func maximum(data []int) int {
 func maxChunks(data []int) int {
 	// ваш код здесь
 
-	return maximum(data)
+	var wg sync.WaitGroup 
+
+	//Если массив меньше 100_000_000
+
+	sizeChunk := CHUNKS
+	if CHUNKS > len(data){
+		sizeChunk = len(data)
+	}
+
+	wg.Add(sizeChunk)
+	resultsMax := make([]int, sizeChunk)
+
+	sizeSlice := len(data) / sizeChunk
+
+	for i := 0; i < sizeChunk; i++ {
+		currentIdx := i * sizeSlice
+		endIdx := currentIdx + sizeSlice
+		if endIdx > len(data) {
+			endIdx = len(data)
+		}
+		chunk := data[currentIdx : endIdx]
+
+		go func(chunk []int, i int){
+			defer wg.Done()
+			maxLocal := maximum(chunk)
+			resultsMax[i] = maxLocal
+		}(chunk, i)
+	}
+
+	wg.Wait()
+
+	return slices.Max(resultsMax)
 }
 
 func main() {
@@ -75,33 +95,7 @@ func main() {
 	fmt.Printf("Ищем максимальное значение в %d потоков\n", CHUNKS)
 	// ваш код здесь
 	start = time.Now()
-
-	sizeSlice := int(math.Ceil(float64(len(data)) / float64(CHUNKS)))
-	wg.Add(CHUNKS)
-
-	for i := 0; i < CHUNKS; i++ {
-			
-		currentIdx := i * sizeSlice
-		endIdx := currentIdx + sizeSlice
-		if endIdx > len(data) {
-			endIdx = len(data)
-		}
-		chunk := data[currentIdx : endIdx]
-
-
-		go func(){
-			defer wg.Done()
-			maxLocal := maxChunks(chunk)
-			mu.Lock()
-			if(max < maxLocal){
-				max = maxLocal
-			}
-			mu.Unlock()
-			
-		}()
-	}
-
-	wg.Wait()
+	max = maxChunks(data)
 	elapsed = time.Since(start)
 
 	fmt.Printf("Максимальное значение элемента: %d\nВремя поиска: %d ms\n", max, elapsed)
