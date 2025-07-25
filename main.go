@@ -53,6 +53,10 @@ func maxChunks(data []int) int {
 		sizeChunk = len(data)
 	}
 
+	if(sizeChunk == 0){
+		return 0
+	}
+
 	wg.Add(sizeChunk)
 	resultsMax := make([]int, sizeChunk)
 
@@ -68,14 +72,13 @@ func maxChunks(data []int) int {
 
 		go func(chunk []int, i int){
 			defer wg.Done()
-			maxLocal := maximum(chunk)
-			resultsMax[i] = maxLocal
+			resultsMax[i] = maximum(chunk)
 		}(chunk, i)
 	}
 
 	wg.Wait()
 
-	return slices.Max(resultsMax)
+	return maximum(resultsMax)
 }
 
 func main() {

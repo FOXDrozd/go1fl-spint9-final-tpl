@@ -93,4 +93,24 @@ func TestMaxChunk(t * testing.T){
 			assert.Equal(t, max , val.max)
 		}
 	})
+
+	t.Run("Data empty", func(t *testing.T){
+		max := maxChunks([]int{})
+		assert.Equal(t, max, 0)
+	})
+
+	t.Run("Data = 0", func(t *testing.T){
+		max := maxChunks(nil)
+		assert.Equal(t, max, 0)
+	})
+
+	t.Run("Data len = 1", func(t *testing.T){
+		max := maxChunks([]int{1})
+		assert.Equal(t, max, 1)
+	})
+
+	t.Run("Data len = 0", func(t *testing.T){
+		max := maxChunks([]int{0})
+		assert.Equal(t, max, 0)
+	})
 }
